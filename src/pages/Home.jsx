@@ -13,12 +13,19 @@ const Home = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [newKeyType, setNewKeyType] = useState('App1');
+  const [newKeyIV, setNewKeyIV] = useState('');
   const [editingKey, setEditingKey] = useState(null);
   const [editKey, setEditKey] = useState('');
   const [editKeyType, setEditKeyType] = useState('App1');
+  const [editKeyIV, setEditKeyIV] = useState('');
 
   // Key types available
-  const keyTypes = ['App1', 'App2', 'qr_mokey', 'qrmolv', 'qrppley', 'qrppIV'];
+  const keyTypes = ['App1', 'App2', 'qr_mo', 'qr_pp'];
+
+  // Helper function to check if IV is required for the key type
+  const isIVRequired = (type) => {
+    return type === 'qr_mo' || type === 'qr_pp';
+  };
 
   const handleLogout = () => {
     logout();
@@ -56,13 +63,32 @@ const Home = () => {
       return;
     }
 
+    // Check if IV is required and validate
+    if (isIVRequired(newKeyType) && !newKeyIV.trim()) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Please enter an IV for this key type',
+        icon: 'error',
+        confirmButtonText: 'Okay',
+      });
+      return;
+    }
+
     try {
-      await deviceApi.post('/device-key', {
+      const payload = {
         key: newKey,
         type: newKeyType
-      });
+      };
+
+      // Add IV if required
+      if (isIVRequired(newKeyType)) {
+        payload.iv = newKeyIV;
+      }
+
+      await deviceApi.post('/device-key', payload);
       setNewKey('');
       setNewKeyType('App1');
+      setNewKeyIV('');
       setShowAddModal(false);
       fetchDeviceKeys();
       Swal.fire({
@@ -94,13 +120,35 @@ const Home = () => {
       return;
     }
 
+    // Check if IV is required and validate
+    if (isIVRequired(editKeyType) && !editKeyIV.trim()) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Please enter an IV for this key type',
+        icon: 'error',
+        confirmButtonText: 'Okay',
+      });
+      return;
+    }
+
     try {
-      await deviceApi.put(`/device-key/${editingKey.id}`, {
+      const payload = {
         key: editKey,
         type: editKeyType
-      });
+      };
+
+      // Add IV if required, or set to null if type changed from IV to non-IV
+      if (isIVRequired(editKeyType)) {
+        payload.iv = editKeyIV;
+      } else {
+        // Send null if changing from IV type to non-IV type
+        payload.iv = null;
+      }
+
+      await deviceApi.put(`/device-key/${editingKey.id}`, payload);
       setEditKey('');
       setEditKeyType('App1');
+      setEditKeyIV('');
       setEditingKey(null);
       setShowEditModal(false);
       fetchDeviceKeys();
@@ -160,6 +208,7 @@ const Home = () => {
     setEditingKey(deviceKey);
     setEditKey(deviceKey.key);
     setEditKeyType(deviceKey.type || 'App1');
+    setEditKeyIV(deviceKey.iv || '');
     setShowEditModal(true);
   };
 
@@ -231,6 +280,9 @@ const Home = () => {
                           Type
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          IV
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Created At
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -241,7 +293,7 @@ const Home = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {deviceKeys.length === 0 ? (
                         <tr>
-                          <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                          <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                             No device keys found
                           </td>
                         </tr>
@@ -258,6 +310,15 @@ const Home = () => {
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 {deviceKey.type || 'N/A'}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {deviceKey.iv ? (
+                                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {deviceKey.iv}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(deviceKey.created_at).toLocaleDateString()}
@@ -309,6 +370,22 @@ const Home = () => {
                   />
                 </div>
 
+                {/* Conditional IV field */}
+                {isIVRequired(newKeyType) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IV (Initialization Vector) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newKeyIV}
+                      onChange={(e) => setNewKeyIV(e.target.value)}
+                      placeholder="Enter IV"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Key Type
@@ -333,6 +410,7 @@ const Home = () => {
                     setShowAddModal(false);
                     setNewKey('');
                     setNewKeyType('App1');
+                    setNewKeyIV('');
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                 >
@@ -371,6 +449,22 @@ const Home = () => {
                   />
                 </div>
 
+                {/* Conditional IV field */}
+                {isIVRequired(editKeyType) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IV (Initialization Vector) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editKeyIV}
+                      onChange={(e) => setEditKeyIV(e.target.value)}
+                      placeholder="Enter IV"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Key Type
@@ -395,6 +489,7 @@ const Home = () => {
                     setShowEditModal(false);
                     setEditKey('');
                     setEditKeyType('App1');
+                    setEditKeyIV('');
                     setEditingKey(null);
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
