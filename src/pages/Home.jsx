@@ -12,8 +12,13 @@ const Home = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [newKey, setNewKey] = useState('');
+  const [newKeyType, setNewKeyType] = useState('App1');
   const [editingKey, setEditingKey] = useState(null);
   const [editKey, setEditKey] = useState('');
+  const [editKeyType, setEditKeyType] = useState('App1');
+
+  // Key types available
+  const keyTypes = ['App1', 'App2', 'qr_mokey', 'qrmolv', 'qrppley', 'qrppIV'];
 
   const handleLogout = () => {
     logout();
@@ -52,8 +57,12 @@ const Home = () => {
     }
 
     try {
-      await deviceApi.post('/device-key', { key: newKey });
+      await deviceApi.post('/device-key', {
+        key: newKey,
+        type: newKeyType
+      });
       setNewKey('');
+      setNewKeyType('App1');
       setShowAddModal(false);
       fetchDeviceKeys();
       Swal.fire({
@@ -86,8 +95,12 @@ const Home = () => {
     }
 
     try {
-      await deviceApi.put(`/device-key/${editingKey.id}`, { key: editKey });
+      await deviceApi.put(`/device-key/${editingKey.id}`, {
+        key: editKey,
+        type: editKeyType
+      });
       setEditKey('');
+      setEditKeyType('App1');
       setEditingKey(null);
       setShowEditModal(false);
       fetchDeviceKeys();
@@ -146,6 +159,7 @@ const Home = () => {
   const openEditModal = (deviceKey) => {
     setEditingKey(deviceKey);
     setEditKey(deviceKey.key);
+    setEditKeyType(deviceKey.type || 'App1');
     setShowEditModal(true);
   };
 
@@ -214,6 +228,9 @@ const Home = () => {
                           Device Key
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Created At
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -224,7 +241,7 @@ const Home = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {deviceKeys.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                          <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
                             No device keys found
                           </td>
                         </tr>
@@ -236,6 +253,11 @@ const Home = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {deviceKey.key}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {deviceKey.type || 'N/A'}
+                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(deviceKey.created_at).toLocaleDateString()}
@@ -272,18 +294,45 @@ const Home = () => {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Device Key</h3>
-              <input
-                type="text"
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
-                placeholder="Enter device key"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <div className="flex justify-end space-x-3 mt-4">
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Device Key
+                  </label>
+                  <input
+                    type="text"
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value)}
+                    placeholder="Enter device key"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Key Type
+                  </label>
+                  <select
+                    value={newKeyType}
+                    onChange={(e) => setNewKeyType(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {keyTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
                 <button
                   onClick={() => {
                     setShowAddModal(false);
                     setNewKey('');
+                    setNewKeyType('App1');
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                 >
@@ -307,18 +356,45 @@ const Home = () => {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Device Key</h3>
-              <input
-                type="text"
-                value={editKey}
-                onChange={(e) => setEditKey(e.target.value)}
-                placeholder="Enter device key"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <div className="flex justify-end space-x-3 mt-4">
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Device Key
+                  </label>
+                  <input
+                    type="text"
+                    value={editKey}
+                    onChange={(e) => setEditKey(e.target.value)}
+                    placeholder="Enter device key"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Key Type
+                  </label>
+                  <select
+                    value={editKeyType}
+                    onChange={(e) => setEditKeyType(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {keyTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
                 <button
                   onClick={() => {
                     setShowEditModal(false);
                     setEditKey('');
+                    setEditKeyType('App1');
                     setEditingKey(null);
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
