@@ -274,6 +274,9 @@ const Home = () => {
                           ID
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Sequence No
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Device Key
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -302,6 +305,9 @@ const Home = () => {
                           <tr key={deviceKey.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {deviceKey.id}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {deviceKey.sequence_no}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {deviceKey.key}
